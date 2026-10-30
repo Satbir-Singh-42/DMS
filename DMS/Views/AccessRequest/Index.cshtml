@@ -1,0 +1,249 @@
+@model AccessRequestListViewModel
+@{
+    ViewData["Title"] = "Access Requests";
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+    <div>
+        <h4 class="mb-0 fw-bold">@(role == "QA" ? "Plant Access Requests" : "My Viewing Requests")</h4>
+        <small class="text-muted">
+            @(role == "QA" 
+                ? "Review and authorize one-time PDF viewing sessions for plant personnel" 
+                : "Track the status of your document viewing requests. An approved request grants one viewing session.")
+        </small>
+    </div>
+    @if (role == "Plant")
+    {
+        <a href="/Document" class="btn btn-primary btn-sm">
+            <i class="bi bi-search me-1"></i> Browse More Documents
+        </a>
+    }
+</div>
+
+@if (role == "QA")
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <span class="fw-semibold text-dark">
+                <i class="bi bi-key-fill text-warning me-1"></i> Pending Access Requests
+            </span>
+            <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                @Model.PendingRequests.Count Pending
+            </span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Serial No.</th>
+                        <th scope="col">Document</th>
+                        <th scope="col">Plant</th>
+                        <th scope="col">Requested By</th>
+                        <th scope="col">Requested At</th>
+                        <th scope="col">Remarks</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.PendingRequests.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                <div>No pending plant access requests at this time.</div>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var req in Model.PendingRequests)
+                    {
+                        <tr>
+                            <td><span class="badge bg-light text-dark border font-monospace">@req.SerialNumber</span></td>
+                            <td class="fw-semibold text-dark">@req.DocumentName</td>
+                            <td><span class="badge bg-secondary-subtle text-dark border">@req.Plant</span></td>
+                            <td><small class="fw-medium text-dark">@req.RequestedByName</small></td>
+                            <td><small class="text-muted">@req.RequestedAt.ToString("dd MMM yyyy HH:mm")</small></td>
+                            <td><small class="text-muted">@(req.Remarks ?? "—")</small></td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#approveAccessModal-@req.RequestID">
+                                        <i class="bi bi-check-lg"></i> Grant Access
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectAccessModal-@req.RequestID">
+                                        <i class="bi bi-x-lg"></i> Deny
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- QA Modals rendered cleanly outside table -->
+    @foreach (var req in Model.PendingRequests)
+    {
+        <!-- Approve Access Modal -->
+        <div class="modal fade" id="approveAccessModal-@req.RequestID" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" asp-action="Approve">
+                        <input type="hidden" name="RequestID" value="@req.RequestID" />
+                        <input type="hidden" name="Decision" value="Approved" />
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title fs-6 fw-bold">
+                                <i class="bi bi-shield-lock me-1"></i> Authorize Viewing Access
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-2">
+                                Authorize employee <strong>@req.RequestedByName</strong> to view controlled document <strong>@req.DocumentName</strong>?
+                            </p>
+                            <div class="alert alert-info py-2 px-3 small mb-3">
+                                <i class="bi bi-info-circle me-1"></i> Grants a single-use viewing token with automatic 30-minute expiry.
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">QA Password Re-verification <span class="text-danger">*</span></label>
+                                <input type="password" name="Password" class="form-control" placeholder="Re-enter your account password" required autofocus />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold">Approval Notes (Optional)</label>
+                                <textarea name="Remarks" class="form-control form-control-sm" rows="2" placeholder="e.g. Access approved for maintenance shift"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="bi bi-key-fill me-1"></i> Grant One-Time Session
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reject Access Modal -->
+        <div class="modal fade" id="rejectAccessModal-@req.RequestID" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" asp-action="Approve">
+                        <input type="hidden" name="RequestID" value="@req.RequestID" />
+                        <input type="hidden" name="Decision" value="Rejected" />
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-shield-x me-1"></i> Deny Access Request</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-2">
+                                Deny viewing request from <strong>@req.RequestedByName</strong> for document <strong>@req.DocumentName</strong>.
+                            </p>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">QA Password Re-verification <span class="text-danger">*</span></label>
+                                <input type="password" name="Password" class="form-control" placeholder="Re-enter your account password" required />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold">Reason for Denial <span class="text-danger">*</span></label>
+                                <textarea name="Remarks" class="form-control form-control-sm" rows="2" placeholder="Explain why access cannot be granted..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-danger">Confirm Denial</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@if (role == "Plant")
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Serial No.</th>
+                        <th scope="col">Document</th>
+                        <th scope="col">Plant</th>
+                        <th scope="col">Requested At</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end">Viewing Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.MyRequests.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-journal-x fs-1 d-block mb-2 opacity-50"></i>
+                                <div>You have not submitted any document requests yet.</div>
+                                <a href="/Document" class="btn btn-outline-primary btn-sm mt-3">
+                                    <i class="bi bi-search me-1"></i> Search Document Master
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var req in Model.MyRequests)
+                    {
+                        <tr>
+                            <td><span class="badge bg-light text-dark border font-monospace">@req.SerialNumber</span></td>
+                            <td class="fw-semibold text-dark">@req.DocumentName</td>
+                            <td><span class="badge bg-secondary-subtle text-dark border">@req.Plant</span></td>
+                            <td><small class="text-muted">@req.RequestedAt.ToString("dd MMM yyyy HH:mm")</small></td>
+                            <td>
+                                @switch (req.Status)
+                                {
+                                    case "Pending":
+                                        <span class="badge badge-pending"><i class="bi bi-hourglass-split me-1"></i> Pending QA Review</span>
+                                        break;
+                                    case "Approved":
+                                        <span class="badge badge-active"><i class="bi bi-check-circle me-1"></i> Approved - Ready</span>
+                                        break;
+                                    case "Viewing":
+                                        <span class="badge bg-info text-dark"><i class="bi bi-eye me-1"></i> Active Session</span>
+                                        break;
+                                    case "Consumed":
+                                        <span class="badge bg-secondary"><i class="bi bi-check2 me-1"></i> Session Consumed</span>
+                                        break;
+                                    case "Expired":
+                                        <span class="badge badge-obsolete"><i class="bi bi-clock me-1"></i> Expired</span>
+                                        break;
+                                    case "Rejected":
+                                        <span class="badge badge-rejected"><i class="bi bi-x-circle me-1"></i> Rejected</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@req.Status</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (req.Status == "Approved")
+                                {
+                                    <a href="/Viewer/Start?requestId=@req.RequestID" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-file-earmark-pdf"></i> Open Viewing Session
+                                    </a>
+                                }
+                                else if (req.Status == "Viewing")
+                                {
+                                    <a href="/Viewer/Start?requestId=@req.RequestID" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-arrow-clockwise"></i> Resume Session
+                                    </a>
+                                }
+                                else if (req.Status == "Expired" || req.Status == "Consumed" || req.Status == "Rejected")
+                                {
+                                    <a href="/Document" class="btn btn-sm btn-outline-secondary">
+                                        Request Again
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

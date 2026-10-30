@@ -1,0 +1,60 @@
+## ==============================================================================
+## Standard .NET / Visual Studio / JetBrains / VS Code .gitignore
+## ==============================================================================
+
+## Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+Generated\ Files/
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+## Visual Studio cache & temporary files
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+*.dbmdl
+*.jfm
+
+## Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+## JetBrains Rider / ReSharper / IntelliJ
+.idea/
+*.DotSettings.user
+_ReSharper*/
+
+## Document Management System (DMS) Controlled Storage & Temp Staging
+[Dd][Mm][Ss]_[Ss]torage/
+**/DMS_Storage/
+Pending/
+Obsolete/
+*.tmp
+*.pdf.tmp
+*.log
+
+## User-specific / Local Configuration overrides
+appsettings.Development.json
+appsettings.*.local.json
+secrets.json
+
+## Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/

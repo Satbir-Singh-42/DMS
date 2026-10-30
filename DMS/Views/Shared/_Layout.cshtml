@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - DMS (Document Management System)</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <style>
+        :root {
+            --dms-primary: #1e3a8a;
+            --dms-primary-hover: #1e40af;
+            --dms-accent: #0284c7;
+            --dms-sidebar-bg: #0f172a;
+            --dms-sidebar-hover: #1e293b;
+            --dms-sidebar-active: #2563eb;
+            --dms-sidebar-text: #94a3b8;
+            --dms-body-bg: #f8fafc;
+            --dms-card-border: #e2e8f0;
+        }
+
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--dms-body-bg); color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* Navbar */
+        .navbar-dms {
+            background: linear-gradient(135deg, var(--dms-primary), #0f172a) !important;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            padding: 0.75rem 1rem;
+        }
+        .navbar-brand { font-size: 1.15rem; letter-spacing: -0.02em; }
+
+        /* Desktop Sidebar */
+        .sidebar {
+            min-height: calc(100vh - 61px);
+            background: var(--dms-sidebar-bg);
+            padding: 1rem 0;
+            border-right: 1px solid #1e293b;
+        }
+        .sidebar-nav-link {
+            color: var(--dms-sidebar-text);
+            padding: 0.65rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+            transition: all 0.15s ease-in-out;
+        }
+        .sidebar-nav-link:hover {
+            color: #ffffff;
+            background: var(--dms-sidebar-hover);
+            border-left-color: var(--dms-accent);
+        }
+        .sidebar-nav-link.active {
+            color: #ffffff;
+            background: var(--dms-sidebar-hover);
+            border-left-color: var(--dms-sidebar-active);
+            font-weight: 600;
+        }
+        .sidebar-section-heading {
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 1.25rem 1.25rem 0.35rem;
+            letter-spacing: 0.08em;
+        }
+
+        /* Mobile Offcanvas Sidebar */
+        .offcanvas-dms {
+            background: var(--dms-sidebar-bg);
+            color: #ffffff;
+            max-width: 280px;
+        }
+
+        /* Main Content */
+        .content-area {
+            padding: 1.5rem;
+            flex: 1;
+        }
+        @@media (max-width: 767.98px) {
+            .content-area { padding: 1rem 0.75rem; }
+        }
+
+        /* Cards & Utilities */
+        .card {
+            border: 1px solid var(--dms-card-border);
+            border-radius: 0.625rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            background: #ffffff;
+        }
+        .stat-card {
+            border: none;
+            border-radius: 0.625rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .table {
+            margin-bottom: 0;
+            vertical-align: middle;
+        }
+        .table thead th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--dms-card-border);
+            white-space: nowrap;
+        }
+        .badge-pending { background-color: #f59e0b; color: #ffffff; }
+        .badge-active { background-color: #10b981; color: #ffffff; }
+        .badge-rejected { background-color: #ef4444; color: #ffffff; }
+        .badge-obsolete { background-color: #64748b; color: #ffffff; }
+
+        /* Buttons */
+        .btn-primary { background-color: var(--dms-primary); border-color: var(--dms-primary); }
+        .btn-primary:hover { background-color: var(--dms-primary-hover); border-color: var(--dms-primary-hover); }
+    </style>
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand navbar-dark navbar-dms sticky-top">
+        <div class="container-fluid">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <!-- Mobile Hamburger Toggle -->
+                <button class="btn btn-outline-light btn-sm d-md-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+            }
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/Dashboard">
+                <i class="bi bi-shield-lock-fill text-info"></i>
+                <span>DMS</span>
+                <span class="badge bg-secondary-subtle text-light fw-normal fs-6 d-none d-sm-inline">Document Control</span>
+            </a>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="ms-auto d-flex align-items-center gap-2 gap-sm-3">
+                    <div class="text-light text-end d-flex flex-column d-none d-sm-flex">
+                        <span class="fw-semibold small">@User.Identity.Name</span>
+                        <span class="badge bg-info text-dark align-self-end" style="font-size: 0.65rem;">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</span>
+                    </div>
+                    <form method="post" asp-controller="Account" asp-action="Logout" class="m-0">
+                        <button type="submit" class="btn btn-outline-light btn-sm d-flex align-items-center gap-1">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span class="d-none d-md-inline">Logout</span>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    </nav>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+
+        <!-- Mobile Offcanvas Sidebar Drawer -->
+        <div class="offcanvas offcanvas-start offcanvas-dms d-md-none" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+            <div class="offcanvas-header border-bottom border-secondary">
+                <h5 class="offcanvas-title text-light" id="mobileSidebarLabel">
+                    <i class="bi bi-shield-lock-fill text-info"></i> Navigation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body p-0">
+                <div class="p-3 border-bottom border-secondary bg-dark bg-opacity-25">
+                    <div class="fw-semibold text-light">@User.Identity.Name</div>
+                    <span class="badge bg-info text-dark">Role: @role</span>
+                </div>
+                <nav class="py-2">
+                    <a href="/Dashboard" class="sidebar-nav-link @(currentController == "Dashboard" ? "active" : "")">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    <div class="sidebar-section-heading">Documents</div>
+                    <a href="/Document" class="sidebar-nav-link @(currentController == "Document" ? "active" : "")">
+                        <i class="bi bi-folder2-open"></i> Document Master
+                    </a>
+
+                    @if (role == DmsRoles.QA)
+                    {
+                        <div class="sidebar-section-heading">QA Workflows</div>
+                        <a href="/Upload" class="sidebar-nav-link @(currentController == "Upload" ? "active" : "")">
+                            <i class="bi bi-cloud-arrow-up"></i> Upload &amp; Verify
+                        </a>
+                        <a href="/Review" class="sidebar-nav-link @(currentController == "Review" ? "active" : "")">
+                            <i class="bi bi-search"></i> Review
+                        </a>
+                        <a href="/Approval" class="sidebar-nav-link @(currentController == "Approval" ? "active" : "")">
+                            <i class="bi bi-check2-circle"></i> Approval
+                        </a>
+                        <a href="/AccessRequest" class="sidebar-nav-link @(currentController == "AccessRequest" ? "active" : "")">
+                            <i class="bi bi-key"></i> Access Requests
+                        </a>
+                        <a href="/Issue" class="sidebar-nav-link @(currentController == "Issue" ? "active" : "")">
+                            <i class="bi bi-send-check"></i> Issue Register
+                        </a>
+                    }
+                    @if (role == DmsRoles.Plant)
+                    {
+                        <div class="sidebar-section-heading">Plant Access</div>
+                        <a href="/AccessRequest" class="sidebar-nav-link @(currentController == "AccessRequest" ? "active" : "")">
+                            <i class="bi bi-key"></i> My Requests
+                        </a>
+                    }
+                    @if (role == DmsRoles.Admin)
+                    {
+                        <div class="sidebar-section-heading">Administration</div>
+                        <a href="/User" class="sidebar-nav-link @(currentController == "User" ? "active" : "")">
+                            <i class="bi bi-people"></i> User Master
+                        </a>
+                    }
+                </nav>
+            </div>
+        </div>
+
+        <!-- Desktop Layout -->
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Desktop Sidebar -->
+                <nav class="col-md-3 col-lg-2 d-none d-md-block sidebar">
+                    <a href="/Dashboard" class="sidebar-nav-link @(currentController == "Dashboard" ? "active" : "")">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    <div class="sidebar-section-heading">Documents</div>
+                    <a href="/Document" class="sidebar-nav-link @(currentController == "Document" ? "active" : "")">
+                        <i class="bi bi-folder2-open"></i> Document Master
+                    </a>
+                    @if (role == DmsRoles.QA)
+                    {
+                        <div class="sidebar-section-heading">QA Workflows</div>
+                        <a href="/Upload" class="sidebar-nav-link @(currentController == "Upload" ? "active" : "")">
+                            <i class="bi bi-cloud-arrow-up"></i> Upload &amp; Verify
+                        </a>
+                        <a href="/Review" class="sidebar-nav-link @(currentController == "Review" ? "active" : "")">
+                            <i class="bi bi-search"></i> Review
+                        </a>
+                        <a href="/Approval" class="sidebar-nav-link @(currentController == "Approval" ? "active" : "")">
+                            <i class="bi bi-check2-circle"></i> Approval
+                        </a>
+                        <a href="/AccessRequest" class="sidebar-nav-link @(currentController == "AccessRequest" ? "active" : "")">
+                            <i class="bi bi-key"></i> Access Requests
+                        </a>
+                        <a href="/Issue" class="sidebar-nav-link @(currentController == "Issue" ? "active" : "")">
+                            <i class="bi bi-send-check"></i> Issue Register
+                        </a>
+                    }
+                    @if (role == DmsRoles.Plant)
+                    {
+                        <div class="sidebar-section-heading">Plant Access</div>
+                        <a href="/AccessRequest" class="sidebar-nav-link @(currentController == "AccessRequest" ? "active" : "")">
+                            <i class="bi bi-key"></i> My Requests
+                        </a>
+                    }
+                    @if (role == DmsRoles.Admin)
+                    {
+                        <div class="sidebar-section-heading">Administration</div>
+                        <a href="/User" class="sidebar-nav-link @(currentController == "User" ? "active" : "")">
+                            <i class="bi bi-people"></i> User Master
+                        </a>
+                    }
+                </nav>
+
+                <!-- Main Content Area -->
+                <main class="col-md-9 col-lg-10 content-area">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                            <i class="bi bi-check-circle-fill fs-5"></i>
+                            <div>@TempData["Success"]</div>
+                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                            <div>@TempData["Error"]</div>
+                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+    }
+    else
+    {
+        <main class="container py-4 flex-grow-1">
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show max-w-md mx-auto" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @RenderBody()
+        </main>
+    }
+
+    <footer class="mt-auto py-2 px-3 text-center text-muted small border-top bg-white">
+        DMS Intranet &bull; Controlled Document Management System &bull; Version 1.0
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

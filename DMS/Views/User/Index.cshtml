@@ -1,0 +1,75 @@
+@model List<DmsUser>
+@{
+    ViewData["Title"] = "User Master";
+}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+    <div>
+        <h4 class="mb-0 fw-bold">User Master</h4>
+        <small class="text-muted">Manage employee logins, role permissions, and access status</small>
+    </div>
+    <a href="/User/Create" class="btn btn-primary btn-sm">
+        <i class="bi bi-person-plus-fill me-1"></i> Add New Employee
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Salary Code</th>
+                    <th scope="col">Employee Name</th>
+                    <th scope="col">Access Role</th>
+                    <th scope="col">Account Status</th>
+                    <th scope="col" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td><span class="badge bg-light text-dark border font-monospace">@user.SalaryCode</span></td>
+                        <td class="fw-semibold text-dark">@user.EmployeeName</td>
+                        <td>
+                            @switch (user.AccessRole)
+                            {
+                                case "Admin":
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Administrator</span>
+                                    break;
+                                case "QA":
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">QA Officer</span>
+                                    break;
+                                case "Plant":
+                                    <span class="badge bg-secondary-subtle text-dark border">Plant Operator</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary">@user.AccessRole</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @if (user.IsActive)
+                            {
+                                <span class="badge bg-success d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-check-circle-fill"></i> Active
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-slash-circle-fill"></i> Disabled
+                                </span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a href="/User/Edit/@user.UserID" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil me-1"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

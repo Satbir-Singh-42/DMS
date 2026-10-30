@@ -1,0 +1,67 @@
+@model UserCreateViewModel
+@{
+    ViewData["Title"] = "Create User";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h4 class="mb-0 fw-bold">Register Employee Account</h4>
+                <small class="text-muted">Create a new DMS account with salary-code login</small>
+            </div>
+            <a href="/User" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Cancel
+            </a>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label asp-for="SalaryCode" class="form-label small fw-semibold">Salary Code <span class="text-danger">*</span></label>
+                            <input asp-for="SalaryCode" class="form-control font-monospace" placeholder="e.g. EMP1042" required autofocus />
+                            <span asp-validation-for="SalaryCode" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label asp-for="EmployeeName" class="form-label small fw-semibold">Employee Full Name <span class="text-danger">*</span></label>
+                            <input asp-for="EmployeeName" class="form-control" placeholder="e.g. John Doe" required />
+                            <span asp-validation-for="EmployeeName" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label asp-for="Password" class="form-label small fw-semibold">Initial Password <span class="text-danger">*</span></label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Minimum 8 characters" required />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label asp-for="AccessRole" class="form-label small fw-semibold">Access Role <span class="text-danger">*</span></label>
+                            <select asp-for="AccessRole" class="form-select" required>
+                                <option value="Plant">Plant (Search, request access &amp; view)</option>
+                                <option value="QA">QA (Upload, review, approve &amp; issue)</option>
+                                <option value="Admin">Admin (User management &amp; settings)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mb-4 mt-3">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" id="isActiveSwitch" checked />
+                        <label class="form-check-label fw-semibold small" for="isActiveSwitch">Account is Active (enable immediate authentication)</label>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <a href="/User" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-person-check-fill me-1"></i> Create Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

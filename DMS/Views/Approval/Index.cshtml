@@ -1,0 +1,144 @@
+@model ReviewListViewModel
+@{
+    ViewData["Title"] = "Document Approval";
+}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+    <div>
+        <h4 class="mb-0 fw-bold">Document Approval</h4>
+        <small class="text-muted">Final sign-off stage. Per security rules, QA password re-verification is required on every decision.</small>
+    </div>
+    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
+        <i class="bi bi-shield-check me-1"></i> @Model.PendingRevisions.Count Awaiting Sign-off
+    </span>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Serial No.</th>
+                    <th scope="col">Document Name</th>
+                    <th scope="col">Plant</th>
+                    <th scope="col">Revision</th>
+                    <th scope="col">Uploaded By</th>
+                    <th scope="col">Stage</th>
+                    <th scope="col" class="text-end">Authorized Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.PendingRevisions.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-shield-check fs-1 text-success d-block mb-2"></i>
+                            <div>No documents pending final approval. All active revisions are current!</div>
+                        </td>
+                    </tr>
+                }
+                @foreach (var rev in Model.PendingRevisions)
+                {
+                    <tr>
+                        <td><span class="badge bg-light text-dark border font-monospace">@rev.SerialNumber</span></td>
+                        <td class="fw-semibold text-dark">@rev.DocumentName</td>
+                        <td><span class="badge bg-secondary-subtle text-dark border">@rev.Plant</span></td>
+                        <td><span class="badge bg-info-subtle text-info border border-info-subtle font-monospace">Rev @rev.RevisionNumber</span></td>
+                        <td><small class="text-muted">@rev.UploadedByName</small></td>
+                        <td><span class="badge bg-warning-subtle text-warning border border-warning-subtle">Review Passed</span></td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#approveModal-@rev.RevisionID">
+                                    <i class="bi bi-check2-circle"></i> Approve &amp; Activate
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectApprovalModal-@rev.RevisionID">
+                                    <i class="bi bi-x-circle"></i> Reject
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Password re-verification modals rendered cleanly outside the table -->
+@foreach (var rev in Model.PendingRevisions)
+{
+    <!-- Approve Modal with Password Re-auth -->
+    <div class="modal fade" id="approveModal-@rev.RevisionID" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="post" asp-action="Submit">
+                    <input type="hidden" name="RevisionID" value="@rev.RevisionID" />
+                    <input type="hidden" name="Decision" value="Approved" />
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title fs-6 fw-bold">
+                            <i class="bi bi-shield-lock me-1"></i> Authorize Document Activation
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">
+                            You are approving <strong>@rev.DocumentName</strong> (Rev <code>@rev.RevisionNumber</code>).
+                            Upon approval, this will become the <strong>Active Effective Revision</strong> and any previous revision will be archived as obsolete.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">QA Password Re-verification <span class="text-danger">*</span></label>
+                            <input type="password" name="Password" class="form-control" placeholder="Re-enter your account password" required autofocus />
+                            <div class="form-text small">Checked on the server before applying document activation.</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Approval Remarks (Optional)</label>
+                            <textarea name="Remarks" class="form-control form-control-sm" rows="2" placeholder="e.g. Validated against QA checklist #204"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-success">
+                            <i class="bi bi-check2-circle me-1"></i> Verify Password &amp; Activate
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal with Password Re-auth -->
+    <div class="modal fade" id="rejectApprovalModal-@rev.RevisionID" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="post" asp-action="Submit">
+                    <input type="hidden" name="RevisionID" value="@rev.RevisionID" />
+                    <input type="hidden" name="Decision" value="Rejected" />
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title fs-6 fw-bold">
+                            <i class="bi bi-shield-x me-1"></i> Reject Document Approval
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">
+                            Rejecting final approval for <strong>@rev.DocumentName</strong> (Rev <code>@rev.RevisionNumber</code>).
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">QA Password Re-verification <span class="text-danger">*</span></label>
+                            <input type="password" name="Password" class="form-control" placeholder="Re-enter your account password" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Reason for Rejection <span class="text-danger">*</span></label>
+                            <textarea name="Remarks" class="form-control form-control-sm" rows="3" placeholder="Specify regulatory or technical reason..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="bi bi-x-circle me-1"></i> Confirm Rejection
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

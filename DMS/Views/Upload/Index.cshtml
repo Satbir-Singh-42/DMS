@@ -1,0 +1,44 @@
+@model UploadViewModel
+@{
+    ViewData["Title"] = "Upload Document";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h4 class="mb-0 fw-bold">Upload Controlled PDF</h4>
+                <small class="text-muted">Step 1 of 2: Upload document file for automated metadata extraction</small>
+            </div>
+            <a href="/Document" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" asp-action="Extract" enctype="multipart/form-data">
+                    <div asp-validation-summary="All" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <div class="mb-4">
+                        <label asp-for="PdfFile" class="form-label fw-semibold">Select PDF Document <span class="text-danger">*</span></label>
+                        <div class="p-4 border border-2 border-dashed rounded-3 text-center bg-light">
+                            <i class="bi bi-file-earmark-pdf fs-1 text-danger d-block mb-2"></i>
+                            <input asp-for="PdfFile" class="form-control" type="file" accept=".pdf" required />
+                            <div class="form-text mt-2 text-muted">
+                                PDF format only. Maximum file size: 100 MB. The system will inspect the first page to extract document fields.
+                            </div>
+                        </div>
+                        <span asp-validation-for="PdfFile" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-cpu me-1"></i> Upload &amp; Extract Metadata
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

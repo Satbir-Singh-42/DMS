@@ -1,0 +1,116 @@
+@model UploadViewModel
+@{
+    ViewData["Title"] = "Verify Metadata";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h4 class="mb-0 fw-bold">Verify Extracted Metadata</h4>
+                <small class="text-muted">Step 2 of 2: QA inspects and corrects fields extracted from Page 1 before saving</small>
+            </div>
+            <a href="/Upload" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-repeat"></i> Re-upload
+            </a>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.DuplicateWarning))
+        {
+            <div class="alert alert-warning d-flex align-items-center gap-2 mb-3" role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                <div>@Model.DuplicateWarning</div>
+            </div>
+        }
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" asp-action="Submit">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <input type="hidden" asp-for="IsRevision" />
+                    <input type="hidden" asp-for="ExistingDocumentID" />
+                    <input type="hidden" asp-for="MetadataExtracted" />
+
+                    <div class="alert alert-info py-2 px-3 small d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>Fields marked with <strong class="text-danger">*</strong> are mandatory. Carefully verify the extracted values against your document master copy.</span>
+                    </div>
+
+                    <!-- Core Document Identity -->
+                    <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                        <i class="bi bi-card-heading me-1"></i> Document Identification
+                    </h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label asp-for="DocumentName" class="form-label small fw-semibold">Document Name / Title <span class="text-danger">*</span></label>
+                            <input asp-for="DocumentName" class="form-control" placeholder="e.g. Standard Operating Procedure for Line 1" required />
+                            <span asp-validation-for="DocumentName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-3">
+                            <label asp-for="SerialNumber" class="form-label small fw-semibold">Serial Number <span class="text-danger">*</span></label>
+                            <input asp-for="SerialNumber" class="form-control font-monospace" placeholder="e.g. SOP-PL1-0042" required />
+                            <span asp-validation-for="SerialNumber" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-3">
+                            <label asp-for="RevisionNumber" class="form-label small fw-semibold">Revision Number <span class="text-danger">*</span></label>
+                            <input asp-for="RevisionNumber" class="form-control font-monospace" placeholder="e.g. 01, 1.0, A" required />
+                            <span asp-validation-for="RevisionNumber" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Organization & Classification -->
+                    <h6 class="fw-bold text-primary border-bottom pb-2 mb-3 mt-4">
+                        <i class="bi bi-diagram-3 me-1"></i> Plant &amp; Classification
+                    </h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6 col-md-3">
+                            <label asp-for="Plant" class="form-label small fw-semibold">Plant Code <span class="text-danger">*</span></label>
+                            <input asp-for="Plant" class="form-control" placeholder="e.g. Plant-A" required />
+                            <span asp-validation-for="Plant" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-3">
+                            <label asp-for="DocumentType" class="form-label small fw-semibold">Document Type</label>
+                            <input asp-for="DocumentType" class="form-control" placeholder="e.g. SOP, WI, Drawing" />
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-3">
+                            <label asp-for="Unit" class="form-label small fw-semibold">Plant Unit</label>
+                            <input asp-for="Unit" class="form-control" placeholder="e.g. Unit-02" />
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-3">
+                            <label asp-for="Category" class="form-label small fw-semibold">Category</label>
+                            <input asp-for="Category" class="form-control" placeholder="e.g. Quality, Production" />
+                        </div>
+                    </div>
+
+                    <!-- Material Details -->
+                    <h6 class="fw-bold text-primary border-bottom pb-2 mb-3 mt-4">
+                        <i class="bi bi-box-seam me-1"></i> Material Details (If Applicable)
+                    </h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label asp-for="MaterialNumber" class="form-label small fw-semibold">Material Number</label>
+                            <input asp-for="MaterialNumber" class="form-control font-monospace" placeholder="e.g. MAT-88402" />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label asp-for="MaterialType" class="form-label small fw-semibold">Material Type</label>
+                            <input asp-for="MaterialType" class="form-control" placeholder="e.g. Raw Material, Packaging" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 pt-3 border-top">
+                        <a href="/Upload" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i> Cancel &amp; Re-upload
+                        </a>
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="bi bi-check2-circle me-1"></i> Confirm &amp; Submit for Review
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

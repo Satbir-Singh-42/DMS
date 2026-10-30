@@ -1,0 +1,68 @@
+@model UserEditViewModel
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h4 class="mb-0 fw-bold">Edit Employee Account</h4>
+                <small class="text-muted">Modify role permissions or reset employee password</small>
+            </div>
+            <a href="/User" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Cancel
+            </a>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" asp-action="Edit">
+                    <input type="hidden" asp-for="UserID" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label asp-for="SalaryCode" class="form-label small fw-semibold">Salary Code <span class="text-danger">*</span></label>
+                            <input asp-for="SalaryCode" class="form-control font-monospace" required />
+                            <span asp-validation-for="SalaryCode" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label asp-for="EmployeeName" class="form-label small fw-semibold">Employee Name <span class="text-danger">*</span></label>
+                            <input asp-for="EmployeeName" class="form-control" required />
+                            <span asp-validation-for="EmployeeName" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label asp-for="NewPassword" class="form-label small fw-semibold">Reset Password (Optional)</label>
+                            <input asp-for="NewPassword" type="password" class="form-control" placeholder="Leave blank to keep existing password" />
+                            <span asp-validation-for="NewPassword" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label asp-for="AccessRole" class="form-label small fw-semibold">Access Role <span class="text-danger">*</span></label>
+                            <select asp-for="AccessRole" class="form-select" required>
+                                <option value="Plant">Plant</option>
+                                <option value="QA">QA</option>
+                                <option value="Admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mb-4 mt-3">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" id="editActiveSwitch" />
+                        <label class="form-check-label fw-semibold small" for="editActiveSwitch">Account Active (toggle off to disable login)</label>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <a href="/User" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

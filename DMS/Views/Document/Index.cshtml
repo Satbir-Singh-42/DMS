@@ -1,0 +1,232 @@
+@model DocumentSearchViewModel
+@{
+    ViewData["Title"] = "Document Master";
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+    <div>
+        <h4 class="mb-0 fw-bold">Document Master</h4>
+        <small class="text-muted">Search and inspect active controlled documents</small>
+    </div>
+    @if (role == "QA")
+    {
+        <a href="/Upload" class="btn btn-primary btn-sm">
+            <i class="bi bi-cloud-arrow-up"></i> Upload New Document
+        </a>
+    }
+</div>
+
+<!-- Search & Filter Card -->
+<div class="card mb-3">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-md-4 col-lg-3">
+                <label class="form-label small fw-semibold text-muted mb-1">Search Keywords</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                    <input name="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Name, serial, material..." />
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label class="form-label small fw-semibold text-muted mb-1">Plant</label>
+                <select name="PlantFilter" class="form-select form-select-sm">
+                    <option value="">All Plants</option>
+                    @foreach (var p in Model.Plants)
+                    {
+                        <option value="@p" selected="@(Model.PlantFilter == p)">@p</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label class="form-label small fw-semibold text-muted mb-1">Type</label>
+                <select name="TypeFilter" class="form-select form-select-sm">
+                    <option value="">All Types</option>
+                    @foreach (var t in Model.Types)
+                    {
+                        <option value="@t" selected="@(Model.TypeFilter == t)">@t</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label class="form-label small fw-semibold text-muted mb-1">Category</label>
+                <select name="CategoryFilter" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c" selected="@(Model.CategoryFilter == c)">@c</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                    <i class="bi bi-funnel-fill"></i> Filter
+                </button>
+                <a href="/Document" class="btn btn-outline-secondary btn-sm" title="Clear Filters">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Documents Table Card -->
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Serial No.</th>
+                    <th scope="col">Document Name</th>
+                    <th scope="col">Plant</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Unit</th>
+                    <th scope="col">Current Rev</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Documents.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-folder-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                            <div>No documents found matching the search criteria.</div>
+                        </td>
+                    </tr>
+                }
+                @foreach (var doc in Model.Documents)
+                {
+                    <tr>
+                        <td><span class="badge bg-light text-dark border font-monospace">@doc.SerialNumber</span></td>
+                        <td class="fw-medium text-dark">@doc.DocumentName</td>
+                        <td><span class="badge bg-secondary-subtle text-dark border">@doc.Plant</span></td>
+                        <td><small class="text-muted">@(doc.DocumentType ?? "—")</small></td>
+                        <td><small class="text-muted">@(doc.Unit ?? "—")</small></td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(doc.CurrentRevisionNumber))
+                            {
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Rev @doc.CurrentRevisionNumber</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
+                        </td>
+                        <td>
+                            @if (doc.CurrentRevisionStatus == "Active")
+                            {
+                                <span class="badge badge-active">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@(doc.CurrentRevisionStatus ?? "No Revision")</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (role == "Plant" && doc.CanRequestAccess)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#requestModal-@doc.DocumentID">
+                                    <i class="bi bi-key"></i> Request Access
+                                </button>
+                            }
+                            @if (role == "QA" && doc.CurrentRevisionStatus == "Active" && doc.CurrentRevisionID.HasValue)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewModal-@doc.DocumentID">
+                                    <i class="bi bi-eye"></i> View PDF
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalCount > Model.PageSize)
+    {
+        <div class="card-footer bg-white border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 py-2">
+            <span class="text-muted small">
+                Showing @((Model.Page - 1) * Model.PageSize + 1)–@Math.Min(Model.Page * Model.PageSize, Model.TotalCount) of @Model.TotalCount documents
+            </span>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0">
+                    @for (int i = 1; i <= Math.Ceiling((double)Model.TotalCount / Model.PageSize); i++)
+                    {
+                        <li class="page-item @(i == Model.Page ? "active" : "")">
+                            <a class="page-link" href="?Page=@i&SearchTerm=@Model.SearchTerm&PlantFilter=@Model.PlantFilter&TypeFilter=@Model.TypeFilter&CategoryFilter=@Model.CategoryFilter">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
+</div>
+
+<!-- Modals rendered outside of table for proper DOM hierarchy and responsive rendering -->
+@foreach (var doc in Model.Documents)
+{
+    @if (role == "Plant" && doc.CanRequestAccess)
+    {
+        <div class="modal fade" id="requestModal-@doc.DocumentID" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" asp-controller="Document" asp-action="RequestAccess">
+                        <input type="hidden" name="DocumentID" value="@doc.DocumentID" />
+                        <input type="hidden" name="DocumentName" value="@doc.DocumentName" />
+                        <input type="hidden" name="SerialNumber" value="@doc.SerialNumber" />
+                        <div class="modal-header">
+                            <h5 class="modal-title fs-6 fw-bold">Request Viewing Access</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-3">Submit a permission request to view <strong>@doc.DocumentName</strong> (Serial: <code>@doc.SerialNumber</code>, Plant: <code>@doc.Plant</code>)?</p>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold">Reason / Remarks (Optional)</label>
+                                <textarea name="Remarks" class="form-control form-control-sm" rows="3" placeholder="Provide justification for QA review..."></textarea>
+                            </div>
+                            <div class="alert alert-info py-2 px-3 small mb-0">
+                                <i class="bi bi-info-circle me-1"></i> QA approval grants one viewing session. Next visit requires a new request.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary">Submit Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (role == "QA" && doc.CurrentRevisionStatus == "Active" && doc.CurrentRevisionID.HasValue)
+    {
+        <div class="modal fade" id="viewModal-@doc.DocumentID" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" asp-controller="Viewer" asp-action="QaView">
+                        <input type="hidden" name="revisionId" value="@doc.CurrentRevisionID" />
+                        <div class="modal-header bg-dark text-white">
+                            <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-shield-lock me-1 text-warning"></i> QA Security Verification</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="small text-muted mb-3">
+                                Per security requirements, please re-enter your password to authorize viewing of <strong>@doc.DocumentName</strong> (Rev @doc.CurrentRevisionNumber).
+                            </p>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold">Your Password</label>
+                                <input type="password" name="password" class="form-control" placeholder="Enter account password" required autofocus />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-eye"></i> Authenticate &amp; View</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}
